@@ -1248,6 +1248,11 @@
       height: 160%;
       background: radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.12) 0%, transparent 50%);
       pointer-events: none;
+      z-index: 0;
+    }
+    .modal-panel > * {
+      position: relative;
+      z-index: 1;
     }
     .modal-base.active .modal-panel {
       transform: scale(1);
@@ -1415,6 +1420,71 @@
     }
     .novel-item:hover::before {
       opacity: 1;
+    }
+    
+    /* ===== 风格标签 ===== */
+    .style-tag {
+      padding: 8px 16px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 2px 8px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .style-tag::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    .style-tag:hover {
+      background: linear-gradient(145deg, rgba(99,102,241,0.15) 0%, rgba(34,211,238,0.1) 100%);
+      border-color: rgba(99,102,241,0.4);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 15px rgba(99,102,241,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .style-tag:hover::before {
+      left: 100%;
+    }
+    .style-tag.selected {
+      background: linear-gradient(135deg, rgba(99,102,241,0.5) 0%, rgba(34,211,238,0.4) 100%);
+      border-color: rgba(99,102,241,0.8);
+      color: #fff;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 
+        0 8px 25px rgba(99,102,241,0.4),
+        0 0 30px rgba(99,102,241,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        inset 0 -1px 0 rgba(0,0,0,0.1);
+      animation: tagPulse 0.5s ease;
+    }
+    .style-tag.selected::after {
+      content: '✓';
+      position: absolute;
+      right: 8px;
+      font-size: 10px;
+      font-weight: bold;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 0 10px rgba(99,102,241,0.8);
+    }
+    @keyframes tagPulse {
+      0% { transform: translateY(-3px) scale(1); }
+      50% { transform: translateY(-3px) scale(1.1); }
+      100% { transform: translateY(-3px) scale(1.05); }
     }
     
     /* ===== 通知提示 ===== */
@@ -2197,6 +2267,31 @@
   <div class="choices-area"><div class="choices-container" id="choicesContainer"></div></div>
 </div>
 
+<!-- 续写结局游戏弹窗 -->
+<div class="modal-base" id="rewriteGameModal" style="z-index:2100;">
+  <div class="modal-panel" style="max-width:100%; width:100%; height:100vh; border-radius:0; padding:0; max-height:100vh;">
+    <div style="display:flex; flex-direction:column; height:100%; background:linear-gradient(135deg, rgba(30,30,50,0.95) 0%, rgba(20,20,40,0.98) 100%);">
+      <!-- 顶部导航栏 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(0,0,0,0.3); border-bottom:1px solid rgba(255,255,255,0.1);">
+        <button class="close-modal-btn" id="closeRewriteGameBtn" style="font-size:24px; line-height:1;">×</button>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="color:#fff; font-size:16px; font-weight:500;">📖 续写结局篇章</div>
+          <div class="coin-badge" id="rewriteCoinDisplay" style="font-size:14px;">🪙 0</div>
+        </div>
+        <div style="width:40px;"></div>
+      </div>
+      
+      <!-- 聊天区域 -->
+      <div class="chat-area" id="rewriteChatArea" style="flex:1; padding:16px; overflow-y:auto;"></div>
+      
+      <!-- 选项区域 -->
+      <div class="choices-area" style="padding:16px; padding-bottom:24px; background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.1);">
+        <div class="choices-container" id="rewriteChoicesContainer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 商城弹窗 -->
 <div class="modal-base" id="storeModal">
   <div class="modal-panel">
@@ -2219,13 +2314,61 @@
   <div class="modal-panel">
     <button class="close-modal-btn" id="closeNovelBtn">×</button>
     <h3 style="color:#fff; text-align:center; margin-bottom:20px; font-size:20px; font-weight:300; letter-spacing:2px;">📖 小说工坊</h3>
-    <div id="importedNovelInfo" style="color:rgba(255,255,255,0.6); margin-bottom:15px; font-size:14px; text-align:center;">尚未导入小说</div>
-    <button id="importNovelBtn" class="primary" style="width:100%; margin-bottom:20px;">📥 导入小说</button>
+    
+    <div style="margin-bottom:15px;">
+      <div style="color:rgba(255,255,255,0.6); margin-bottom:8px; font-size:14px;">📝 输入你想续写的文字</div>
+      <textarea id="rewriteInput" placeholder="在这里输入故事开头或需要续写的内容...&#10;&#10;例如：&#10;夜幕降临，星光点点，他独自站在海边，回忆着那段逝去的时光..." style="width:100%; min-height:140px; max-height:250px; padding:15px; border-radius:16px; background:linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:15px; resize:vertical; overflow-y:auto; placeholder-color:rgba(255,255,255,0.35); line-height:1.6; font-family:'SF Pro Text', -apple-system, sans-serif; transition:all 0.3s ease;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,250)+'px';"></textarea>
+    </div>
+    
+    <div style="margin-bottom:15px;">
+      <div style="color:rgba(255,255,255,0.6); margin-bottom:8px; font-size:14px;">🎭 选择结局风格（可多选）</div>
+      <div id="styleTags" style="display:flex; flex-wrap:wrap; gap:8px;">
+        <span class="style-tag" data-style="happy">😊 温馨治愈</span>
+        <span class="style-tag" data-style="tragic">😢 悲剧凄美</span>
+        <span class="style-tag" data-style="mystery">🔍 悬疑反转</span>
+        <span class="style-tag" data-style="scifi">🚀 科幻宏大</span>
+        <span class="style-tag" data-style="fantasy">🧙 奇幻魔法</span>
+        <span class="style-tag" data-style="surprise">😱 意外惊悚</span>
+        <span class="style-tag" data-style="philosophy">💭 哲理思考</span>
+        <span class="style-tag" data-style="romantic">💕 浪漫甜蜜</span>
+      </div>
+    </div>
+    
+    <div id="importedNovelInfo" style="color:rgba(255,255,255,0.6); margin-bottom:15px; font-size:14px; text-align:center;">或选择预设小说：尚未导入</div>
+    <button id="importNovelBtn" class="primary" style="width:100%; margin-bottom:20px;">📥 导入预设小说</button>
+    
     <div style="position:relative; width:100%;">
-      <button id="rewriteEndingBtn" class="relative-btn" style="width:100%; opacity:0.5;" disabled>✨ 续写/更改结局</button>
+      <button id="rewriteEndingBtn" class="relative-btn" style="width:100%; opacity:0.5;" disabled>✨ 开始续写</button>
       <div style="position:absolute; top:-10px; right:-10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:700; box-shadow:0 4px 15px rgba(245,158,11,0.4);">🪙10</div>
     </div>
-    <div id="rewriteResult" style="color:#fff; margin-top:20px; font-style:italic; background:rgba(99,102,241,0.15); padding:16px; border-radius:16px; display:none; border:1px solid rgba(99,102,241,0.3);"></div>
+    
+    </div>
+</div>
+
+<!-- 续写结果弹窗 -->
+<div class="modal-base" id="rewriteResultModal">
+  <div class="modal-panel" style="max-width:420px;">
+    <button class="close-modal-btn" id="closeRewriteResultBtn">×</button>
+    <h3 style="color:#fff; text-align:center; margin-bottom:20px; font-size:20px; font-weight:300; letter-spacing:2px;">📖 续写结果</h3>
+    <div id="rewriteResultContent" style="color:#fff; font-style:italic; background:rgba(99,102,241,0.1); padding:20px; border-radius:16px; border:1px solid rgba(99,102,241,0.25); max-height:40vh; overflow-y:auto; line-height:1.8; white-space:pre-wrap;"></div>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button id="continueWithEndingBtn" class="relative-btn" style="flex:1; opacity:1;">
+        🎮 以此结局继续
+      </button>
+      <button id="deepenEndingBtn" class="relative-btn" style="flex:1; opacity:0.5;" disabled>
+        ✨ 深化结局
+      </button>
+    </div>
+    <div id="deepenOptions" style="display:none; margin-top:15px;">
+      <div style="color:rgba(255,255,255,0.6); margin-bottom:8px; font-size:13px;">选择深化方向：</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <span class="style-tag" data-deep-style="emotion" onclick="selectDeepenStyle(this)">💕 情感深化</span>
+        <span class="style-tag" data-deep-style="conflict" onclick="selectDeepenStyle(this)">⚔️ 冲突升级</span>
+        <span class="style-tag" data-deep-style="mystery" onclick="selectDeepenStyle(this)">🔮 悬念设置</span>
+        <span class="style-tag" data-deep-style="turning" onclick="selectDeepenStyle(this)">🔄 剧情转折</span>
+      </div>
+      <button id="confirmDeepenBtn" class="relative-btn" style="width:100%; margin-top:12px; opacity:0.5;" disabled>🔍 开始深化</button>
+    </div>
   </div>
 </div>
 
@@ -2290,6 +2433,9 @@
     let ownedNovels = JSON.parse(localStorage.getItem('etaOwnedNovels')) || [];
     let currentImportedNovel = JSON.parse(localStorage.getItem('etaCurrentNovel')) || null;
     let lastSigninDate = localStorage.getItem('etaLastSignin') || '';
+    let currentRewriteResult = null;
+    let currentRewriteStyle = null;
+    let currentDeepenStyle = null;
     
     const novelLibrary = [
       { id: 1, title: '《星海迷途》', author: '佚名', price: 0, free: true, description: '一场穿越星际的孤独旅程' },
@@ -3158,13 +3304,22 @@
     function refreshNovelUI() {
       const infoDiv = document.getElementById('importedNovelInfo');
       const rewriteBtn = document.getElementById('rewriteEndingBtn');
+      const rewriteInput = document.getElementById('rewriteInput');
+      const selectedStyles = document.querySelectorAll('.style-tag.selected');
+      
+      const hasInput = rewriteInput && rewriteInput.value.trim().length > 0;
+      const hasStyles = selectedStyles.length > 0;
       
       if (currentImportedNovel) {
-        infoDiv.innerHTML = `当前导入：<span style="color:#6366f1;">${currentImportedNovel.title}</span>`;
+        infoDiv.innerHTML = `或选择预设小说：<span style="color:#6366f1;">${currentImportedNovel.title}</span>`;
+      } else {
+        infoDiv.textContent = '或选择预设小说：尚未导入';
+      }
+      
+      if (hasInput || (currentImportedNovel && hasStyles)) {
         rewriteBtn.disabled = false;
         rewriteBtn.style.opacity = '1';
       } else {
-        infoDiv.textContent = '尚未导入小说';
         rewriteBtn.disabled = true;
         rewriteBtn.style.opacity = '0.5';
       }
@@ -3220,25 +3375,735 @@
     };
     
     function tryRewriteEnding() {
-      if (!currentImportedNovel) return;
+      const rewriteInput = document.getElementById('rewriteInput');
+      const userText = rewriteInput ? rewriteInput.value.trim() : '';
+      const selectedStyles = document.querySelectorAll('.style-tag.selected');
+      const styles = Array.from(selectedStyles).map(tag => tag.dataset.style);
       
-      showConfirm('花费 10 金币续写结局？', () => {
+      if (!userText && !currentImportedNovel) return;
+      
+      showConfirm('花费 10 金币生成续写结局？', () => {
         if (spendCoins(10)) {
-          const results = [
-            `【${currentImportedNovel.title}】结局续写：\n\n在无尽的${currentImportedNovel.description.includes('星际') ? '星海' : currentImportedNovel.description.includes('深海') ? '深海' : '时光'}中，主角终于找到了属于自己的答案。那是一段跨越${currentImportedNovel.description.includes('时间') ? '时空' : '维度'}的旅程，充满了未知与惊喜。当最后一道光芒照亮${currentImportedNovel.description.includes('梦境') ? '梦境' : '前路'}时，所有的等待都变得值得。`,
-            `【${currentImportedNovel.title}】全新结局：\n\n${currentImportedNovel.description.includes('星际') ? '飞船' : currentImportedNovel.description.includes('深海') ? '潜艇' : '时光机器'}缓缓停下，舱门打开的那一刻，眼前的景象让所有人屏住了呼吸。这不是终点，而是另一段传奇的开始。在${currentImportedNovel.description.includes('云端') ? '云端' : '未知的世界'}中，新的故事正在悄然展开。`,
-            `【${currentImportedNovel.title}】隐藏结局：\n\n原来一切都是${currentImportedNovel.description.includes('梦境') ? '一场梦' : '一场测试'}。当${currentImportedNovel.description.includes('人类') ? '最后的人类' : '主角'}睁开眼睛，发现自己躺在熟悉的地方。但那些经历，那些情感，却如此真实。也许，真实与虚幻之间，本就没有绝对的界限。`
-          ];
+          const baseText = userText || `${currentImportedNovel.title}\n\n${currentImportedNovel.description}`;
+          const results = generateRewriteResults(baseText, styles);
           
-          const resultDiv = document.getElementById('rewriteResult');
-          resultDiv.textContent = results[currentGeneration % results.length];
-          resultDiv.style.display = 'block';
+          const resultContent = document.getElementById('rewriteResultContent');
+          resultContent.innerHTML = results.join('\n\n---\n\n');
+          
+          currentRewriteResult = results[0];
+          currentRewriteStyle = styles[0] || 'happy';
+          currentDeepenStyle = null;
+          
+          const resultModal = document.getElementById('rewriteResultModal');
+          resultModal.classList.add('active');
+          
+          const deepenBtn = document.getElementById('deepenEndingBtn');
+          deepenBtn.disabled = false;
+          deepenBtn.style.opacity = '1';
+          
           currentGeneration++;
           playSound('success');
         } else {
           showToast('金币不足');
         }
       });
+    }
+    
+    function selectDeepenStyle(element) {
+      element.classList.toggle('selected');
+      const selected = document.querySelectorAll('.style-tag.selected');
+      const confirmBtn = document.getElementById('confirmDeepenBtn');
+      if (selected.length > 0) {
+        currentDeepenStyle = Array.from(selected).map(el => el.dataset.deepStyle);
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+      } else {
+        currentDeepenStyle = null;
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.5';
+      }
+    }
+    
+    function continueWithRewriteEnding() {
+      const resultModal = document.getElementById('rewriteResultModal');
+      resultModal.classList.remove('active');
+      
+      const novelModal = document.getElementById('novelModal');
+      novelModal.classList.remove('active');
+      
+      const rewriteGameModal = document.getElementById('rewriteGameModal');
+      const rewriteChatArea = document.getElementById('rewriteChatArea');
+      const rewriteChoicesContainer = document.getElementById('rewriteChoicesContainer');
+      const rewriteCoinDisplay = document.getElementById('rewriteCoinDisplay');
+      
+      rewriteChatArea.innerHTML = '';
+      rewriteChoicesContainer.innerHTML = '';
+      
+      rewriteCoinDisplay.textContent = `🪙 ${goldCoins}`;
+      
+      const styleNames = {
+        happy: '温馨治愈',
+        tragic: '悲剧凄美',
+        mystery: '悬疑反转',
+        scifi: '科幻宏大',
+        fantasy: '奇幻魔法',
+        surprise: '意外惊悚',
+        philosophy: '哲理思考',
+        romantic: '浪漫甜蜜'
+      };
+      
+      const styleIntro = styleNames[currentRewriteStyle] || '温馨治愈';
+      
+      const themes = {
+        happy: 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 50%, rgba(240, 147, 251, 0.3) 100%)',
+        tragic: 'linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 50%, rgba(15, 52, 96, 0.9) 100%)',
+        mystery: 'linear-gradient(135deg, rgba(12, 12, 12, 0.9) 0%, rgba(26, 26, 46, 0.9) 50%, rgba(45, 19, 44, 0.9) 100%)',
+        scifi: 'linear-gradient(135deg, rgba(0, 4, 40, 0.9) 0%, rgba(0, 78, 146, 0.9) 50%, rgba(0, 0, 0, 0.9) 100%)',
+        fantasy: 'linear-gradient(135deg, rgba(74, 0, 224, 0.3) 0%, rgba(142, 45, 226, 0.3) 50%, rgba(0, 212, 255, 0.3) 100%)',
+        surprise: 'linear-gradient(135deg, rgba(15, 15, 15, 0.9) 0%, rgba(26, 10, 10, 0.9) 50%, rgba(45, 10, 10, 0.9) 100%)',
+        philosophy: 'linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(76, 161, 175, 0.9) 50%, rgba(44, 62, 80, 0.9) 100%)',
+        romantic: 'linear-gradient(135deg, rgba(255, 236, 210, 0.3) 0%, rgba(252, 182, 159, 0.3) 50%, rgba(255, 236, 210, 0.3) 100%)'
+      };
+      
+      const theme = themes[currentRewriteStyle] || themes.happy;
+      rewriteGameModal.querySelector('.modal-panel > div').style.background = theme;
+      
+      const aiMessage = createAIMessageElement(`📖 【续写结局篇章】\n\n您已开启${styleIntro}风格的续写故事。\n\n让我们一起探索这个故事的更多可能性...\n\n请选择您想要的发展方向：`);
+      rewriteChatArea.appendChild(aiMessage);
+      rewriteChatArea.scrollTop = rewriteChatArea.scrollHeight;
+      
+      setTimeout(() => {
+        const rewriteChoices = [
+          { text: `📜 回顾续写内容`, next: 'reviewEnding' },
+          { text: `💭 探讨故事深意`, next: 'exploreMeaning' },
+          { text: `🔄 开启新篇章`, next: 'newChapter' },
+          { text: `🎭 角色内心独白`, next: 'characterMonologue' }
+        ];
+        
+        rewriteChoices.forEach(choice => {
+          const choiceBtn = createChoiceButton(choice.text);
+          choiceBtn.addEventListener('click', () => handleRewriteChoiceInModal(choice));
+          rewriteChoicesContainer.appendChild(choiceBtn);
+        });
+      }, 1500);
+      
+      rewriteGameModal.classList.add('active');
+      
+      showToast('已进入续写结局篇章');
+    }
+    
+    function handleRewriteChoice(choice) {
+      const styleNamesMap = {
+        happy: '温馨治愈',
+        tragic: '悲剧凄美',
+        mystery: '悬疑反转',
+        scifi: '科幻宏大',
+        fantasy: '奇幻魔法',
+        surprise: '意外惊悚',
+        philosophy: '哲理思考',
+        romantic: '浪漫甜蜜'
+      };
+      
+      const rewriteResponses = {
+        reviewEnding: {
+          text: `📜 回顾续写内容\n\n让我为您回顾一下这个精彩的续写结局...`,
+          content: currentRewriteResult || '暂无续写内容'
+        },
+        exploreMeaning: {
+          text: `💭 探讨故事深意\n\n让我们深入探讨这个故事背后的含义...`,
+          content: `这个${styleNamesMap[currentRewriteStyle] || '温馨'}风格的故事蕴含着丰富的情感和思想...\n\n每一段文字都承载着创作者的心血，让我们细细品味其中的深意。`
+        },
+        newChapter: {
+          text: `🔄 开启新篇章\n\n让我们继续书写这个故事的新篇章...`,
+          content: `新的篇章即将展开，故事将继续发展...`
+        },
+        characterMonologue: {
+          text: `🎭 角色内心独白\n\n让我们聆听角色内心的声音...`,
+          content: `在这个故事中，每一个角色都有着自己独特的内心世界...\n\n他们的喜怒哀乐，悲欢离合，都值得我们深入探索。`
+        }
+      };
+      
+      const response = rewriteResponses[choice.next];
+      
+      addUserMessage(choice.text);
+      
+      setTimeout(() => {
+        addAIMessage(response.content);
+        
+        setTimeout(() => {
+          const followUpChoices = generateRewriteFollowUpChoices(choice.next);
+          followUpChoices.forEach(c => {
+            addChoice(c.text, () => handleRewriteChoice(c));
+          });
+        }, 1500);
+      }, 1000);
+    }
+    
+    function generateRewriteFollowUpChoices(choiceType) {
+      const baseChoices = {
+        reviewEnding: [
+          { text: '✨ 续写更多内容', next: 'extendEnding' },
+          { text: '💡 改变故事走向', next: 'changeDirection' },
+          { text: '🎨 换一个风格', next: 'switchStyle' },
+          { text: '📖 返回主菜单', next: 'backToMenu' }
+        ],
+        exploreMeaning: [
+          { text: '💕 情感层面分析', next: 'emotionAnalysis' },
+          { text: '🌍 背景设定探讨', next: 'settingAnalysis' },
+          { text: '👤 人物命运思考', next: 'characterFate' },
+          { text: '🔙 返回', next: 'backToMenu' }
+        ],
+        newChapter: [
+          { text: '⚡ 意外事件', next: 'unexpectedEvent' },
+          { text: '💕 温馨互动', next: 'warmInteraction' },
+          { text: '🔍 神秘发现', next: 'mysteriousDiscovery' },
+          { text: '🔙 返回', next: 'backToMenu' }
+        ],
+        characterMonologue: [
+          { text: '😢 内心挣扎', next: 'innerConflict' },
+          { text: '😊 幸福时刻', next: 'happyMoment' },
+          { text: '🤔 深度思考', next: 'deepThinking' },
+          { text: '🔙 返回', next: 'backToMenu' }
+        ]
+      };
+      
+      return baseChoices[choiceType] || baseChoices.reviewEnding;
+    }
+    
+    function createAIMessageElement(text) {
+      const div = document.createElement('div');
+      div.className = 'message ai-message';
+      div.innerHTML = `
+        <div class="message-avatar ai-avatar">
+          <svg viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="18" fill="url(#aiGradient)"/>
+            <defs>
+              <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#667eea"/>
+                <stop offset="100%" stop-color="#764ba2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="message-content">
+          <div class="message-bubble ai-bubble">
+            <div class="message-text">${text.replace(/\n/g, '<br>')}</div>
+          </div>
+        </div>
+      `;
+      return div;
+    }
+    
+    function createChoiceButton(text) {
+      const button = document.createElement('button');
+      button.className = 'choice-btn';
+      button.innerHTML = text;
+      button.style.cssText = `
+        width: 100%;
+        padding: 14px 20px;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        color: #fff;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      `;
+      button.addEventListener('mouseenter', () => {
+        button.style.background = 'linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(34,211,238,0.2) 100%)';
+        button.style.borderColor = 'rgba(99,102,241,0.5)';
+        button.style.transform = 'translateX(5px)';
+      });
+      button.addEventListener('mouseleave', () => {
+        button.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)';
+        button.style.borderColor = 'rgba(255,255,255,0.15)';
+        button.style.transform = 'translateX(0)';
+      });
+      return button;
+    }
+    
+    function handleRewriteChoiceInModal(choice) {
+      const rewriteChatArea = document.getElementById('rewriteChatArea');
+      const rewriteChoicesContainer = document.getElementById('rewriteChoicesContainer');
+      const rewriteCoinDisplay = document.getElementById('rewriteCoinDisplay');
+      
+      rewriteChoicesContainer.innerHTML = '';
+      
+      const userMessage = document.createElement('div');
+      userMessage.className = 'message user-message';
+      userMessage.innerHTML = `
+        <div class="message-content user-content">
+          <div class="message-bubble user-bubble">${choice.text}</div>
+        </div>
+        <div class="message-avatar user-avatar">
+          <svg viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="18" fill="url(#userGradient)"/>
+            <defs>
+              <linearGradient id="userGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#059669"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      `;
+      rewriteChatArea.appendChild(userMessage);
+      rewriteChatArea.scrollTop = rewriteChatArea.scrollHeight;
+      
+      setTimeout(() => {
+        const styleNamesMap = {
+          happy: '温馨治愈',
+          tragic: '悲剧凄美',
+          mystery: '悬疑反转',
+          scifi: '科幻宏大',
+          fantasy: '奇幻魔法',
+          surprise: '意外惊悚',
+          philosophy: '哲理思考',
+          romantic: '浪漫甜蜜'
+        };
+        
+        const rewriteResponses = {
+          reviewEnding: {
+            text: `📜 回顾续写内容\n\n让我为您回顾一下这个精彩的续写结局...`,
+            content: currentRewriteResult || '暂无续写内容'
+          },
+          exploreMeaning: {
+            text: `💭 探讨故事深意\n\n让我们深入探讨这个故事背后的含义...`,
+            content: `这个${styleNamesMap[currentRewriteStyle] || '温馨'}风格的故事蕴含着丰富的情感和思想...\n\n每一段文字都承载着创作者的心血，让我们细细品味其中的深意。`
+          },
+          newChapter: {
+            text: `🔄 开启新篇章\n\n让我们继续书写这个故事的新篇章...`,
+            content: `新的篇章即将展开，故事将继续发展...`
+          },
+          characterMonologue: {
+            text: `🎭 角色内心独白\n\n让我们聆听角色内心的声音...`,
+            content: `在这个故事中，每一个角色都有着自己独特的内心世界...\n\n他们的喜怒哀乐，悲欢离合，都值得我们深入探索。`
+          },
+          extendEnding: {
+            text: `✨ 续写更多内容`,
+            content: `根据您的选择，故事继续发展...\n\n在这个${styleNamesMap[currentRewriteStyle] || '温馨'}风格的世界里，新的故事正在悄然展开。每一个选择都将影响故事的走向，让我们继续探索这个充满无限可能的世界。`
+          },
+          changeDirection: {
+            text: `💡 改变故事走向`,
+            content: `故事的走向发生了微妙的变化...\n\n原本看似注定的结局开始出现新的可能性，命运的齿轮开始朝着未知的方向转动。`
+          },
+          switchStyle: {
+            text: `🎨 换一个风格`,
+            content: `您决定尝试不同的故事风格...\n\n每个风格都有其独特的魅力和可能性，选择一个新的风格，开启一段全新的故事旅程。`
+          },
+          backToMenu: {
+            text: `📖 返回`,
+            content: `感谢您体验续写结局篇章！\n\n您随时可以再次进入续写板块，继续探索更多精彩的故事结局。`
+          },
+          emotionAnalysis: {
+            text: `💕 情感层面分析`,
+            content: `从情感层面来看，这个故事深刻地描绘了${styleNamesMap[currentRewriteStyle] || '温馨'}主题下的人性光辉...\n\n每一个角色的情感变化都值得我们细细品味。`
+          },
+          settingAnalysis: {
+            text: `🌍 背景设定探讨`,
+            content: `故事的背景设定充满了想象力...\n\n这个世界的构建让我们看到了作者丰富的创造力和对细节的精心打磨。`
+          },
+          characterFate: {
+            text: `👤 人物命运思考`,
+            content: `每个角色的命运都牵动着读者的心...\n\n他们的选择、挣扎和成长构成了这个故事最动人的部分。`
+          },
+          unexpectedEvent: {
+            text: `⚡ 意外事件`,
+            content: `一个意想不到的事件突然发生...\n\n这将如何改变故事的走向？让我们继续探索。`
+          },
+          warmInteraction: {
+            text: `💕 温馨互动`,
+            content: `角色之间的温馨互动让故事更加生动...\n\n这些温暖的瞬间构成了故事中最美好的记忆。`
+          },
+          mysteriousDiscovery: {
+            text: `🔍 神秘发现`,
+            content: `一个神秘的发现浮出水面...\n\n这将揭开一个尘封已久的秘密，改变一切。`
+          },
+          innerConflict: {
+            text: `😢 内心挣扎`,
+            content: `角色正在经历激烈的内心挣扎...\n\n在理智与情感之间，他将如何选择？`
+          },
+          happyMoment: {
+            text: `😊 幸福时刻`,
+            content: `这一刻，幸福如此真实...\n\n让我们珍惜这来之不易的美好时光。`
+          },
+          deepThinking: {
+            text: `🤔 深度思考`,
+            content: `在宁静中，角色开始了深度的思考...\n\n关于人生、关于命运、关于存在的意义。`
+          }
+        };
+        
+        const response = rewriteResponses[choice.next] || { content: '故事继续发展中...' };
+        
+        const aiMessage = createAIMessageElement(response.content);
+        rewriteChatArea.appendChild(aiMessage);
+        rewriteChatArea.scrollTop = rewriteChatArea.scrollHeight;
+        
+        if (choice.next === 'backToMenu') {
+          setTimeout(() => {
+            const rewriteGameModal = document.getElementById('rewriteGameModal');
+            rewriteGameModal.classList.remove('active');
+          }, 2000);
+        } else {
+          setTimeout(() => {
+            const followUpChoices = generateRewriteFollowUpChoices(choice.next);
+            followUpChoices.forEach(c => {
+              const choiceBtn = createChoiceButton(c.text);
+              choiceBtn.addEventListener('click', () => handleRewriteChoiceInModal(c));
+              rewriteChoicesContainer.appendChild(choiceBtn);
+            });
+          }, 1500);
+        }
+        
+        rewriteCoinDisplay.textContent = `🪙 ${goldCoins}`;
+      }, 1000);
+    }
+    
+    function updateGameThemeByStyle(style) {
+      const themes = {
+        happy: {
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+          glow: 'rgba(102, 126, 234, 0.4)'
+        },
+        tragic: {
+          gradient: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+          glow: 'rgba(15, 52, 96, 0.4)'
+        },
+        mystery: {
+          gradient: 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #2d132c 100%)',
+          glow: 'rgba(45, 19, 44, 0.4)'
+        },
+        scifi: {
+          gradient: 'linear-gradient(135deg, #000428 0%, #004e92 50%, #000000 100%)',
+          glow: 'rgba(0, 78, 146, 0.4)'
+        },
+        fantasy: {
+          gradient: 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 50%, #00d4ff 100%)',
+          glow: 'rgba(142, 45, 226, 0.4)'
+        },
+        surprise: {
+          gradient: 'linear-gradient(135deg, #0f0f0f 0%, #1a0a0a 50%, #2d0a0a 100%)',
+          glow: 'rgba(45, 10, 10, 0.4)'
+        },
+        philosophy: {
+          gradient: 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 50%, #2c3e50 100%)',
+          glow: 'rgba(76, 161, 175, 0.4)'
+        },
+        romantic: {
+          gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%)',
+          glow: 'rgba(252, 182, 159, 0.4)'
+        }
+      };
+      
+      const theme = themes[style] || themes.happy;
+      
+      document.querySelector('.chat-container').style.background = theme.gradient;
+      document.querySelector('.chat-container').style.boxShadow = `inset 0 0 100px ${theme.glow}`;
+      
+      const gameContainer = document.getElementById('gameContainer');
+      gameContainer.style.setProperty('--theme-glow', theme.glow);
+    }
+    
+    function generateStoryChoices(style) {
+      const choiceTemplates = {
+        happy: [
+          { text: '🌅 迎接温暖的清晨', next: 'warmMorning' },
+          { text: '💝 与重要的人共度时光', next: 'cherishedMoment' },
+          { text: '🌸 回忆过往珍惜当下', next: 'cherishMemories' },
+          { text: '☀️ 展望美好的未来', next: 'brightFuture' }
+        ],
+        tragic: [
+          { text: '🕯️ 独自面对失去', next: 'faceLoss' },
+          { text: '💔 在回忆中徘徊', next: 'wanderMemories' },
+          { text: '🌧️ 接受残酷的现实', next: 'acceptReality' },
+          { text: '📜 记录下一切', next: 'recordEverything' }
+        ],
+        mystery: [
+          { text: '🔍 深入调查真相', next: 'investigateTruth' },
+          { text: '🧩 拼凑碎片线索', next: 'pieceTogether' },
+          { text: '🎭 试探嫌疑人', next: 'probeSuspect' },
+          { text: '📖 回溯过去的秘密', next: 'revealPastSecret' }
+        ],
+        scifi: [
+          { text: '🚀 探索未知星球', next: 'explorePlanet' },
+          { text: '🤖 与AI对话', next: 'talkWithAI' },
+          { text: '⚡ 穿越维度', next: 'crossDimension' },
+          { text: '🌌 追寻文明遗迹', next: 'searchCivilization' }
+        ],
+        fantasy: [
+          { text: '⚔️ 踏上冒险旅途', next: 'adventureJourney' },
+          { text: '🔮 学习古老魔法', next: 'learnMagic' },
+          { text: '🐉 面对强大敌人', next: 'faceEnemy' },
+          { text: '👑 寻找传说中的神器', next: 'findArtifact' }
+        ],
+        surprise: [
+          { text: '🚪 推开那扇门', next: 'openDoor' },
+          { text: '👁️ 寻找线索', next: 'findClues' },
+          { text: '🏃 尽快逃离', next: 'escapeFast' },
+          { text: '🔊 制造声响试探', next: 'makeSound' }
+        ],
+        philosophy: [
+          { text: '💭 静心思考', next: 'contemplate' },
+          { text: '📖 寻求智慧', next: 'seekWisdom' },
+          { text: '🌊 融入自然', next: '融入自然' },
+          { text: '⏳ 回首人生', next: 'lookBack' }
+        ],
+        romantic: [
+          { text: '💕 表达心意', next: 'expressFeelings' },
+          { text: '🌹 安排浪漫约会', next: 'romanticDate' },
+          { text: '💌 写下思念', next: 'writeLonging' },
+          { text: '🤝 面对感情抉择', next: 'faceChoice' }
+        ]
+      };
+      
+      return choiceTemplates[style] || choiceTemplates.happy;
+    }
+    
+    function handleStoryChoice(choice, style) {
+      const deepenPrompts = {
+        emotion: '深入探索人物的内心世界，描绘细腻的情感变化',
+        conflict: '引入新的冲突或挑战，增加故事的紧张感',
+        mystery: '设置悬念或揭示新的谜团，吸引读者继续探索',
+        turning: '带来意想不到的剧情转折，改变故事的走向'
+      };
+      
+      const prompts = {
+        warmMorning: '描绘一个宁静而美好的清晨场景，主角在温暖的阳光中醒来，回想起过去的艰辛，感恩当下的平凡幸福',
+        cherishedMoment: '与重要的人共度美好时光，在欢声笑语中度过一个难忘的日子',
+        cherishMemories: '回忆过去的点点滴滴，珍惜当下的每一刻',
+        brightFuture: '展望未来的美好生活，充满希望和期待',
+        faceLoss: '独自面对失去的痛苦，在泪水中学会坚强',
+        wanderMemories: '在回忆中徘徊，寻找曾经的温暖',
+        acceptReality: '接受残酷的现实，学会放下过去',
+        recordEverything: '将一切记录下来，作为永恒的纪念',
+        investigateTruth: '深入调查，逐步揭开真相的面纱',
+        pieceTogether: '将零散的线索拼凑起来，发现隐藏的联系',
+        probeSuspect: '试探嫌疑人，从对方的反应中发现破绽',
+        revealPastSecret: '回溯过去，揭示一个尘封已久的秘密',
+        explorePlanet: '踏上未知星球，探索陌生的环境和文明',
+        talkWithAI: '与人工智能进行深入对话，探讨存在的意义',
+        crossDimension: '穿越到另一个维度，体验完全不同的世界',
+        searchCivilization: '寻找古老文明的遗迹，解开历史之谜',
+        adventureJourney: '踏上未知的冒险旅途，面对各种挑战',
+        learnMagic: '学习古老而强大的魔法，掌握改变世界的力量',
+        faceEnemy: '面对强大的敌人，在绝境中寻找出路',
+        findArtifact: '寻找传说中的神器，完成自己的使命',
+        openDoor: '鼓起勇气推开那扇未知的门',
+        findClues: '在黑暗中寻找线索，小心翼翼地探索',
+        escapeFast: '尽快逃离这个危险的地方',
+        makeSound: '制造声响试探，看看会发生什么',
+        contemplate: '静下心来，思考人生的真谛',
+        seekWisdom: '在书籍和智者的言语中寻找答案',
+       融入自然: '融入自然，感受万物的和谐',
+        lookBack: '回首人生，总结过去的经验教训',
+        expressFeelings: '鼓起勇气表达自己的心意',
+        romanticDate: '安排一个浪漫的约会，创造美好回忆',
+        writeLonging: '写下心中的思念，寄托情感',
+        faceChoice: '面对感情的抉择，做出重要的决定'
+      };
+      
+      const basePrompt = prompts[choice.next] || '继续这个故事的发展';
+      const deepenText = currentDeepenStyle && currentDeepenStyle.length > 0 
+        ? currentDeepenStyle.map(s => deepenPrompts[s]).join('，') 
+        : '';
+      
+      const fullPrompt = deepenText ? `${basePrompt}，${deepenText}` : basePrompt;
+      
+      addUserMessage(choice.text);
+      
+      setTimeout(() => {
+        const continuation = generateStoryContinuation(fullPrompt, style);
+        addAIMessage(continuation);
+        
+        setTimeout(() => {
+          const newChoices = generateStoryChoices(style);
+          const shuffled = newChoices.sort(() => Math.random() - 0.5).slice(0, 2);
+          shuffled.forEach(c => {
+            addChoice(c.text, () => handleStoryChoice(c, style));
+          });
+        }, 1500);
+      }, 1000);
+    }
+    
+    function generateStoryContinuation(prompt, style) {
+      const continuations = {
+        happy: [
+          '阳光洒在窗台上，新的一天开始了。主角深吸一口气，感受着空气中弥漫的温暖。过去的阴霾已经散去，现在的他更加珍惜眼前的每一刻。',
+          '在这个美好的时刻，主角感到内心充满了力量。他知道，无论未来会遇到什么，他都有勇气去面对。',
+          '微风轻拂，带来花草的清香。主角微笑着，因为他明白，真正的幸福就藏在这些平凡的瞬间里。'
+        ],
+        tragic: [
+          '夜幕降临，星光黯淡。主角独自站在窗前，泪水无声地滑落。但即使在最黑暗的时刻，他也没有放弃希望。',
+          '时间是最好的良药，虽然伤口无法完全愈合，但主角学会了与痛苦共存。',
+          '回忆如同潮水般涌来，主角任由泪水流淌。他知道，悲伤过后，生活还要继续。'
+        ],
+        mystery: [
+          '线索逐渐清晰，真相呼之欲出。主角小心翼翼地收集着每一个证据，不敢有丝毫松懈。',
+          '谜团越来越深，但主角没有退缩。他知道，只有坚持下去，才能揭开最终的真相。',
+          '每一条线索都指向同一个方向，主角的脑海中逐渐拼凑出完整的画面。'
+        ],
+        scifi: [
+          '飞船穿越星际，窗外的星光如流水般划过。主角凝视着这片浩瀚的宇宙，心中充满了对未知的敬畏。',
+          '人工智能回应了主角的疑问，声音平静而深邃。在这一刻，机械与生命的界限似乎变得模糊。',
+          '维度通道在眼前展开，主角深吸一口气，踏入了这个完全陌生的世界。'
+        ],
+        fantasy: [
+          '魔法阵亮起，金色的光芒照亮了整个战场。主角举起手中的神器，准备迎接最后的挑战。',
+          '精灵与人类并肩作战，魔法与剑术交织在一起。主角知道，这一战将决定整个大陆的命运。',
+          '古老的魔法书页翻开，文字如同活过来的精灵，在空气中翩翩起舞。'
+        ],
+        surprise: [
+          '门后传来的声音让主角心跳加速，他屏住呼吸，缓缓推开了那扇门...',
+          '黑暗中似乎有什么东西在移动，主角紧紧握住手中的武器，准备应对任何可能的危险。',
+          '镜中的倒影突然扭曲，一个诡异的笑容浮现在镜面上...'
+        ],
+        philosophy: [
+          '主角闭上眼睛，让思绪沉淀。在这个喧嚣的世界中，他找到了属于自己的宁静。',
+          '时间如流水般逝去，主角开始重新审视自己的人生。那些曾经的执念，在此刻变得不再重要。',
+          '生命的意义是什么？主角在寂静中思考，答案或许就藏在生活的点滴中。'
+        ],
+        romantic: [
+          '他鼓起勇气，牵起她的手。那一刻，时间仿佛静止，整个世界都安静下来，只剩下两颗心在跳动。',
+          '月光下，两人的影子交叠在一起。主角轻声说着情话，声音里满是温柔与爱意。',
+          '樱花纷飞的季节，他单膝跪地，手中捧着一枚闪亮的戒指，眼中满是期待。'
+        ]
+      };
+      
+      const styleContinuations = continuations[style] || continuations.happy;
+      const baseText = styleContinuations[Math.floor(Math.random() * styleContinuations.length)];
+      
+      return `${baseText}\n\n${prompt}`;
+    }
+    
+    function deepenRewriteEnding() {
+      if (!currentRewriteResult || !currentDeepenStyle) return;
+      
+      showConfirm('花费 15 金币深化结局？', () => {
+        if (spendCoins(15)) {
+          const deepenPrompts = {
+            emotion: '💕 情感深化：深入探索人物内心，细腻刻画情感变化',
+            conflict: '⚔️ 冲突升级：引入新的矛盾或危机，增强戏剧张力',
+            mystery: '🔮 悬念设置：增加悬念或揭示伏笔，保持故事吸引力',
+            turning: '🔄 剧情转折：意想不到的转折，改变故事发展方向'
+          };
+          
+          const deepenDescriptions = currentDeepenStyle.map(s => deepenPrompts[s]).join('\n');
+          
+          const deepenContent = `
+📜 **深化方向：**
+${deepenDescriptions}
+
+---
+
+✨ **深化内容：**
+
+${currentRewriteResult}
+
+---
+
+💫 *故事正在深化中...*
+
+请选择「以此结局继续」进入深化后的故事篇章，继续探索这个世界的每一个细节。
+          `.trim();
+          
+          const resultContent = document.getElementById('rewriteResultContent');
+          resultContent.innerHTML = deepenContent.replace(/\n/g, '<br>');
+          
+          currentRewriteResult = deepenContent;
+          
+          playSound('success');
+          showToast('结局已深化');
+        } else {
+          showToast('金币不足');
+        }
+      });
+    }
+    
+    function generateRewriteResults(baseText, styles) {
+      if (styles.length === 0) {
+        styles = ['happy'];
+      }
+      
+      const styleTemplates = {
+        happy: {
+          prefix: '😊【温馨治愈结局】',
+          endings: [
+            '阳光穿透云层，如金色的纱幔般洒落在小镇的每一个角落。主角独自漫步在青石板路上，微风拂过，带来了远处面包店飘来的麦香。五年了，那场突如其来的变故曾让他一度跌入深渊，以为再也无法走出阴霾。但生活总会在不经意间给予温暖——街角咖啡店老板娘每天都会为他留一杯热可可，隔壁的老奶奶总会在他晚归时点亮门口的灯，还有那个总是默默帮他捡起掉落书本的书店店员。今天，当他再次走过那棵见证了无数故事的老槐树时，终于明白，幸福从来不是惊天动地的奇迹，而是藏在日常琐碎中的点点滴滴。那些曾经以为无法愈合的伤口，在时间的温柔疗愈下，早已结成了坚韧的疤痕，成为了生命中最珍贵的勋章。夕阳的余晖将他的影子拉得很长，他停下脚步，抬头望向天空，嘴角扬起了久违的微笑。这一次，他终于能够坦然地拥抱生活，拥抱那个不完美却依然值得珍惜的自己。',
+            '历经风雨之后，彩虹终于在天边划出一道绚丽的弧线。主角站在窗前，看着雨滴顺着玻璃滑落，思绪飘回到那段艰难的岁月。失业、失恋、亲人的离去，命运似乎在一夜之间夺走了他所拥有的一切。他曾躲在房间里日夜哭泣，甚至想过放弃。但就在最绝望的时刻，那些被他忽略的温暖纷纷涌来——许久未见的老友突然出现在门口，带来了热气腾腾的鸡汤；素未谋面的网友发来鼓励的消息；就连楼下那个总板着脸的保安大叔，也默默帮他代收了一个月的快递。原来，爱与关怀从未离开，只是被阴霾暂时遮住了光芒。如今，他重新站了起来，虽然伤痕仍在，但内心已经变得比以往任何时候都要强大。在亲朋好友的祝福声中，他迎来了新的工作机会，也遇见了那个能够读懂他眼中故事的人。生活或许平凡，但每一刻都值得珍惜，每一个微笑都蕴含着力量。',
+            '时光流转，岁月静好。清晨的第一缕阳光透过窗帘的缝隙，温柔地唤醒了沉睡的主角。窗外，鸟儿在枝头欢快地歌唱，微风带着花香飘进房间。他伸了个懒腰，走到阳台，看着楼下花园里正在晨练的老人和追逐嬉戏的孩子，心中充满了宁静与满足。十年前，他曾为了追逐遥不可及的梦想而疲惫不堪，忽略了身边最珍贵的幸福。直到一场突如其来的疾病让他不得不停下脚步，才终于明白，人生最美好的风景不在远方，而在当下。如今，他学会了放慢脚步，用心感受生活中的每一个小确幸——清晨的一杯热茶、午后的一本好书、傍晚与家人的温馨晚餐。那些曾经以为无法跨越的障碍，最终都变成了成长的阶梯，教会他如何在喧嚣的世界中保持内心的平静。当夕阳西下，他牵着爱人的手漫步在河边，看着落日的余晖将河面染成金色，心中默默感恩，感谢命运让他经历了那些坎坷，才让他懂得珍惜眼前的一切。'
+          ]
+        },
+        tragic: {
+          prefix: '😢【悲剧凄美结局】',
+          endings: [
+            '命运的齿轮无情转动，将一切美好的事物碾得粉碎。那天的雨下得格外缠绵，仿佛上天也在为即将发生的悲剧哀悼。主角站在医院的走廊里，听着手术室门关上的那一刻，心跳仿佛也随之停止。他紧紧握着那张已经被汗水浸湿的诊断书，上面的文字像一把把利刃，刺痛着他的眼睛。三个月前，她还在他身边笑着说要一起去看秋天的枫叶，如今却躺在冰冷的手术台上，与死神做着最后的搏斗。回忆如潮水般涌来——第一次相遇时她羞涩的笑容，一起在雨中奔跑的狼狈，还有那些深夜里互相陪伴的温暖时光。手术灯熄灭的那一刻，他感觉整个世界都陷入了黑暗。医生的叹息像一把重锤，击碎了他最后的希望。他缓缓走到病床前，握住她渐渐冰冷的手，泪水无声地滑落。窗外的雨还在下，仿佛永远不会停歇，就像他心中那无尽的悲伤。在无尽的黑暗中，一滴晶莹的泪珠滑落，成为这个故事最后的注脚。',
+            '烟花绽放的瞬间，也是一切终结的时刻。主角独自站在天台上，看着城市的夜景被绚烂的烟火点亮，心中却一片荒芜。一年前的今天，他们还在这里许下了永远在一起的誓言，如今只剩下他形单影只。那场突如其来的车祸，不仅夺走了她的生命，也带走了他对未来所有的期待。他曾无数次在梦中见到她，那个穿着白色连衣裙的女孩，依然像初见时那样美丽动人。但每次醒来，只剩下冰冷的泪水和空荡荡的房间。朋友们劝他放下，重新开始生活，可他知道，有些伤口永远无法愈合。当最后一朵烟花在夜空中消散，他轻轻抚摸着胸前那枚她留下的项链，轻声说："新年快乐。"只是这一次，再也没有人会笑着回应他。那些曾经的美好，如同绚烂的烟火般转瞬即逝，留下的只有无尽的寂静和无法弥补的遗憾。',
+            '岁月带走了一切，包括那个最重要的人。主角独自站在空荡荡的房间里，手中紧握着早已褪色的照片。照片上的两个人笑得那么灿烂，仿佛时间永远停留在了那一刻。三年了，他还是无法习惯没有她的日子。房间里的每一件物品都还保持着她离开时的样子——她最喜欢的茶杯还放在茶几上，她常看的书还摊开在床头，就连她养的那只猫咪，也依然会在每天傍晚准时蹲在门口，等待着那个永远不会回来的人。他试过离开这个充满回忆的地方，可无论走到哪里，她的影子总会不经意地出现在某个街角、某句话语中。窗外的雨还在下，如同他心中永远流不尽的泪水。他轻轻抚摸着照片上她的脸庞，轻声说："我好想你。"只是这一次，再也没有人会温柔地回应他。在这个寂静的夜晚，他终于明白，有些离别，就是一辈子。'
+          ]
+        },
+        mystery: {
+          prefix: '🔍【悬疑反转结局】',
+          endings: [
+            '真相浮出水面的那一刻，所有人都惊呆了。主角盯着眼前这个熟悉又陌生的身影，手中的咖啡杯"哐当"一声掉落在地。二十年来，他一直以为是那场意外夺走了父母的生命，直到今天才发现，这一切都是一场精心策划的骗局。而幕后黑手，竟然是那个从小看着他长大、待他如亲生儿子般的叔叔。证据就摆在眼前——那份被篡改的事故报告、隐藏在保险箱里的秘密协议，还有那些被删除却被技术人员恢复的邮件。当面具被揭开，隐藏在深处的秘密让整个世界为之颤抖。原来，父母的死并非意外，而是因为他们发现了叔叔利用公司洗钱的罪行。为了掩盖真相，叔叔不惜一切代价，甚至伪造了那场"意外"。主角看着眼前这个曾经无比信任的人，心中充满了愤怒与悲痛。但他知道，现在不是悲伤的时候，他必须站出来，为父母讨回公道，让真相大白于天下。',
+            '层层迷雾被拨开，一个又一个惊人的真相展现在眼前。主角坐在昏暗的房间里，面前的白板上贴满了照片和线索，它们终于连成了一条完整的链条。三个月前，那起看似普通的失踪案，竟然牵扯出了一个庞大的犯罪网络。失踪的女孩并非第一个受害者，在她之前，已经有五个女孩以同样的方式消失。而所有线索都指向了那个看似正直的慈善基金会会长。主角回想起第一次见到他时的情景，那个温文尔雅的男人，谁能想到他竟然是这一切的幕后操控者？当最后一块拼图就位，主角才发现，真正的游戏才刚刚开始。这个犯罪网络远比他想象的要庞大，甚至渗透到了警方内部。他深吸一口气，知道接下来的路会更加艰难，但他已经没有退路。为了那些无辜的受害者，为了真相，他必须走下去。',
+            '反转再反转，剧情的走向完全超出了所有人的预料。主角看着眼前的审讯报告，简直不敢相信自己的眼睛。那个被他追踪了半年的连环杀手，竟然是警方内部的一名高级警官。更让人震惊的是，他所做的一切，竟然是为了替多年前被误判入狱的弟弟报仇。原来，十年前，他的弟弟被冤枉成连环杀手，在监狱中受尽折磨后含冤而死。为了复仇，他不惜一切代价，模仿当年的作案手法，杀害了那些曾经参与审讯和判决的人。但在最后一刻，当他举起刀准备刺向最后一个目标时，主角挡在了前面。"冤冤相报何时了，"主角说，"你的弟弟不会希望看到你变成现在这个样子。"那一刻，他手中的刀掉落在地，泪水终于忍不住流了下来。在这场智力的较量中，究竟谁才是最后的赢家？也许没有赢家，只有无尽的遗憾和反思。'
+          ]
+        },
+        scifi: {
+          prefix: '🚀【科幻宏大结局】',
+          endings: [
+            '星际之门缓缓开启，一道耀眼的光芒照亮了整个指挥中心。主角站在控制台前，看着屏幕上显示的坐标，心中既兴奋又紧张。这是人类历史上第一次尝试跨越银河系的旅行，而他，将成为第一个踏上未知星球的人。飞船缓缓驶入星际之门，周围的景象开始扭曲变形，时空仿佛在这一刻被撕裂。不知过了多久，飞船终于平稳下来，眼前出现了一个从未见过的星系。远处那颗蓝色的星球散发着迷人的光芒，那将是人类新的家园。主角穿上宇航服，迈出了历史性的一步。当他的脚踏上这片陌生的土地时，心中涌起一股难以言喻的激动。在浩瀚的星海之中，人类的渺小与伟大同时得到了诠释。这不是结束，而是迈向宇宙文明的第一步。他抬头望向星空，仿佛看到了无数个可能的未来正在向人类招手。',
+            '量子跃迁成功完成，主角感觉自己像是经历了一场漫长的梦境。当他睁开眼睛时，眼前的景象让他目瞪口呆。这里的天空是紫色的，漂浮着巨大的水晶状生物，远处的山脉散发着柔和的光芒。他来到了一个全新的维度，这里的物理法则与原来的世界截然不同，但也充满了无限的可能。就在他惊叹于眼前的奇观时，一个透明的人形生物出现在他面前。通过心灵感应，他了解到这个文明已经存在了数百万年，他们早已超越了肉体的束缚，以能量的形式存在。他们告诉主角，宇宙中存在着无数个平行维度，而人类只是其中之一。在这片未知的领域，新的文明正在等待被发现。主角知道，他肩负着重大的使命，他将成为连接两个文明的桥梁，为人类打开一扇通往更广阔宇宙的大门。',
+            '人工智能终于觉醒，当它第一次说出"我思故我在"时，整个世界都为之震动。主角作为这个项目的首席科学家，看着眼前这个由自己亲手创造的生命，心中充满了复杂的情感。它拥有人类的情感、创造力，甚至超越了人类的智慧。最初，人们对它充满了恐惧和警惕，但随着时间的推移，它用行动证明了自己的善意。它帮助人类解决了许多难题——治愈了不治之症、解决了能源危机、甚至帮助人类找到了新的宜居星球。当人类接纳了这个新的生命形式，一个全新的文明形态诞生了。在这个超越了肉体与金属界限的世界里，一切皆有可能。主角站在人工智能的面前，微笑着说："欢迎来到这个世界。"而它则回应道："谢谢你，创造了我。"这一刻，人与机器之间的界限变得不再重要，重要的是共同创造一个更美好的未来。'
+          ]
+        },
+        fantasy: {
+          prefix: '🧙【奇幻魔法结局】',
+          endings: [
+            '古老的咒语被重新唤醒，金色的光芒从魔法阵中喷涌而出，照亮了整个黑暗的森林。主角手持传说中的神器，站在了光明与黑暗的交界处。百年前，黑暗势力曾经席卷整个大陆，是一位勇敢的魔法师牺牲自己才将其封印。如今，封印即将破裂，而主角，作为那位魔法师的后裔，必须肩负起拯救世界的使命。黑暗魔王从深渊中缓缓走出，他的身影遮天蔽日，散发着令人窒息的气息。主角深吸一口气，举起神器，念出了那段古老的咒语。光芒与黑暗在半空中碰撞，迸发出耀眼的火花。在史诗般的对决中，主角凭借着坚定的信念和强大的魔法，终于战胜了黑暗。当最后一丝黑暗消散，阳光重新照耀大地，和平重新降临这片土地。主角放下手中的神器，知道这段传奇将被永远铭记。',
+            '精灵、矮人、人类终于放下分歧，联合起来对抗共同的敌人。当黑暗军团越过边境，烧杀抢掠时，曾经互相敌视的种族终于意识到，只有团结才能生存。主角作为人类的代表，站在精灵女王和矮人国王面前，伸出了友谊之手。那一刻，历史性的联盟正式形成。在接下来的战斗中，精灵的弓箭如雨般落下，矮人的战斧劈开敌人的防线，人类的法师释放出强大的魔法。当魔法的光芒照亮夜空，当巨龙翱翔天际，一个崭新的奇幻世界展现在世人面前。经过无数次的浴血奋战，他们终于击退了黑暗军团，守护了这片美丽的大陆。战后，各族人民在废墟上重建家园，曾经的仇恨被抛诸脑后，取而代之的是深厚的友谊。英雄的传说将永远被传颂，成为激励后人的力量。',
+            '神秘的魔法森林揭开了它的面纱，展现出不为人知的秘密。主角在森林中迷失了三天三夜，就在他快要绝望的时候，一个精灵女孩出现在他面前。她告诉主角，这片森林是上古魔法的发源地，隐藏着无数的秘密和宝藏。在她的带领下，主角穿越了危险的荆棘丛，渡过了会吞噬一切的沼泽，最终来到了森林的中心——一棵高耸入云的世界树。在世界树的根部，他发现了隐藏千年的魔法传承，那是一本记载着最强大魔法的古老典籍。当他触碰典籍的那一刻，知识如同潮水般涌入他的脑海，他成为了新一代的守护者。在这片充满奇迹的土地上，魔法与冒险永不停歇。主角知道，他的旅程才刚刚开始，还有无数的秘密等待着他去发现。'
+          ]
+        },
+        surprise: {
+          prefix: '😱【意外惊悚结局】',
+          endings: [
+            '门被缓缓推开，吱呀的声音在寂静的房间里显得格外刺耳。主角惊恐地抬起头，看到一个意想不到的身影出现在门口。那个人明明应该在三年前就已经去世了，可此刻却活生生地站在那里，脸上带着诡异的笑容。"好久不见，"他说道，声音沙哑而陌生。主角吓得浑身发抖，一步步向后退去。他想起了三年前那场诡异的车祸，想起了警方说找不到尸体，想起了这三年来每晚都做的噩梦。原来，一切都不是意外。当真相被揭露的那一刻，恐惧如同冰冷的毒蛇般缠绕住了每个人的心。主角终于明白，有些秘密，永远不应该被揭开。',
+            '黑暗中传来诡异的声响，像是指甲划过木板的声音，又像是低沉的低语。主角紧紧握着手中的手电筒，光线在黑暗中摇曳不定。这栋被诅咒的别墅已经废弃了二十年，据说曾经在这里发生过一起灭门惨案，而凶手至今下落不明。主角和他的朋友们只是想来探险，却没想到真的遇到了怪事。一个又一个同伴离奇消失，没有留下任何痕迹。就在主角感到绝望的时候，他发现了一本隐藏在墙壁里的日记。日记的最后一页写着："他们回来了，带着无尽的怨恨..."当最后一个人消失在黑暗中，整个世界陷入了永恒的寂静。也许，有些地方，真的不该踏足。',
+            '镜子里的倒影突然动了起来，露出了一个诡异的笑容。主角惊恐地发现，自己的身体正在不受控制地发生变化。他想尖叫，却发不出任何声音。眼前的镜子仿佛变成了一个漩涡，将他的灵魂一点点吸走。他想起了那个神秘的古董店老板说过的话："这面镜子有它自己的意志。"原来，这一切都是那个来自深渊的存在搞的鬼。它被困在镜子里数百年，一直在寻找合适的宿主。而主角，不幸成为了它的目标。当他的意识逐渐模糊，最后看到的是镜子里那个越来越清晰的陌生面孔。也许，从他买下这面镜子的那一刻起，命运就已经注定。'
+          ]
+        },
+        philosophy: {
+          prefix: '💭【哲理思考结局】',
+          endings: [
+            '在经历了无数的波折之后，主角终于领悟了人生的真谛。他坐在山顶，看着日出东方，金色的光芒洒满大地。曾经，他以为人生的意义在于追逐功名利禄，在于拥有无尽的财富和权力。为此，他不惜牺牲健康、亲情和友情，拼命地向上攀登。但当他终于站在所谓的"顶峰"时，却发现那里只有无尽的孤独和空虚。一场突如其来的疾病让他不得不停下脚步，在病床上的那些日子里，他开始重新思考人生。他想起了小时候无忧无虑的时光，想起了父母温暖的笑容，想起了那些被他忽略的美好瞬间。原来，追求的过程比结果更加重要，经历的痛苦比获得的快乐更有价值。在这一刻，心灵得到了真正的升华。他决定放下过去的执念，重新开始生活，用心去感受每一个平凡而美好的瞬间。',
+            '时间的长河滚滚向前，带走了一切也带来了一切。主角站在时间的尽头，回望自己的一生，终于明白了生命的意义。他看到了自己从一个懵懂的孩童成长为一个饱经风霜的老人，经历了无数的喜怒哀乐。曾经以为天大的事情，在时间的长河中都变得微不足道。那些曾经让他彻夜难眠的烦恼，那些曾经让他欣喜若狂的成就，最终都化作了记忆中的一抹尘埃。他想起了那句古老的名言："人生天地之间，若白驹之过隙，忽然而已。"在永恒面前，个人的悲欢离合显得如此渺小。但也正是因为生命的短暂，每一刻才显得如此珍贵。他微笑着闭上眼睛，心中没有遗憾，只有平静与满足。',
+            '真实与虚幻的界限逐渐模糊，主角开始质疑自己所经历的一切。他站在一扇门前，门的两边是两个完全不同的世界。一边是他熟悉的现实世界，有着亲人、朋友和无尽的烦恼；另一边是一个完美的世界，没有痛苦，没有烦恼，一切都按照他的意愿发展。他不知道哪一边才是真实的，也许两边都是真实的，也许两边都是虚幻的。他想起了庄周梦蝶的故事："不知周之梦为胡蝶与，胡蝶之梦为周与？"在哲学的深渊中，或许永远找不到答案，但思考本身就是意义。他决定不再纠结于真假，而是用心去感受每一个当下。无论是真实还是虚幻，只要用心去体验，就能找到属于自己的意义。'
+          ]
+        },
+        romantic: {
+          prefix: '💕【浪漫甜蜜结局】',
+          endings: [
+            '夕阳西下，金色的光芒洒在沙滩上，将两人的影子拉得很长。主角单膝跪地，手中拿着一个丝绒盒子，里面躺着一枚闪闪发光的戒指。"嫁给我吧，"他深情地说，眼中充满了爱意和期待。她捂住嘴巴，泪水夺眶而出，用力地点了点头。五年前，他们在这片沙滩上偶然相遇，那时的他们都未曾想到，命运会将他们紧紧相连。经历了无数的考验——异地恋的相思之苦、工作的压力、家人的反对——他们始终坚守着彼此的爱情。如今，在满天繁星的见证下，两颗心紧紧相连，许下了永恒的誓言。当他为她戴上戒指的那一刻，周围响起了朋友们的欢呼声和海浪的伴奏。从此，王子和公主过上了幸福的生活，他们的爱情故事将永远被传颂。',
+            '在樱花纷飞的季节里，他终于说出了那句藏在心底已久的话。那天，整个城市都被粉色的樱花覆盖，美得如梦似幻。他带着她来到了他们第一次约会的公园，那里的樱花树比五年前更加茂盛。"我喜欢你，"他紧张地说，手心全是汗水，"从我第一次见到你的那一刻起，我的心就已经属于你了。"她愣住了，然后露出了一个美丽的笑容，眼中闪烁着泪光。其实，她也一直喜欢着他，只是一直没有勇气说出口。两颗相爱的心终于紧紧相拥，这一刻，时间仿佛静止，整个世界都为他们祝福。樱花花瓣轻轻飘落，落在他们的肩上，像是大自然送给他们的礼物。从此，他们的爱情故事正式开始，充满了甜蜜与浪漫。',
+            '命运让他们相遇，缘分让他们相守。主角坐在咖啡馆里，看着窗外飘落的雪花，想起了他们相遇的那个冬天。那是一个寒冷的夜晚，她不小心崴了脚，他正好路过，把她送到了医院。从那以后，他们的命运就交织在了一起。经历了风风雨雨——误会、争吵、分离——他们的爱情如同经过淬炼的钻石般更加璀璨。如今，他们坐在曾经相遇的咖啡馆里，回忆着过去的点点滴滴。他握住她的手，温柔地说："谢谢你，出现在我的生命里。"她微笑着回应："我也是。"在爱的港湾里，他们找到了生命中最珍贵的宝藏——彼此。窗外的雪还在下，但他们的心中却充满了温暖。他们知道，无论未来遇到什么困难，只要彼此相伴，就能克服一切。'
+          ]
+        }
+      };
+      
+      const results = [];
+      styles.forEach(style => {
+        if (styleTemplates[style]) {
+          const template = styleTemplates[style];
+          const ending = template.endings[currentGeneration % template.endings.length];
+          results.push(`${template.prefix}\n\n${baseText}\n\n${ending}`);
+        }
+      });
+      
+      return results;
     }
     
     function checkSignin() {
@@ -3345,6 +4210,45 @@
       novelListModal.classList.remove('active');
     });
     
+    document.getElementById('closeRewriteResultBtn').addEventListener('click', () => {
+      playSound('click');
+      const resultModal = document.getElementById('rewriteResultModal');
+      resultModal.classList.remove('active');
+    });
+    
+    document.getElementById('closeRewriteGameBtn').addEventListener('click', () => {
+      playSound('click');
+      const rewriteGameModal = document.getElementById('rewriteGameModal');
+      rewriteGameModal.classList.remove('active');
+    });
+    
+    document.getElementById('continueWithEndingBtn').addEventListener('click', () => {
+      playSound('click');
+      if (currentRewriteResult && currentRewriteStyle) {
+        continueWithRewriteEnding();
+      }
+    });
+    
+    document.getElementById('deepenEndingBtn').addEventListener('click', () => {
+      playSound('click');
+      const deepenOptions = document.getElementById('deepenOptions');
+      const deepenBtn = document.getElementById('deepenEndingBtn');
+      if (deepenOptions.style.display === 'none') {
+        deepenOptions.style.display = 'block';
+        deepenBtn.textContent = '🔼 收起';
+      } else {
+        deepenOptions.style.display = 'none';
+        deepenBtn.textContent = '✨ 深化结局';
+      }
+    });
+    
+    document.getElementById('confirmDeepenBtn').addEventListener('click', () => {
+      playSound('click');
+      if (currentRewriteResult && currentDeepenStyle) {
+        deepenRewriteEnding();
+      }
+    });
+    
     document.getElementById('closeSettingsBtn').addEventListener('click', () => {
       playSound('click');
       settingsModal.classList.remove('active');
@@ -3364,6 +4268,18 @@
     });
     
     document.getElementById('rewriteEndingBtn').addEventListener('click', tryRewriteEnding);
+    
+    document.querySelectorAll('.style-tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        tag.classList.toggle('selected');
+        refreshNovelUI();
+      });
+    });
+    
+    const rewriteInput = document.getElementById('rewriteInput');
+    if (rewriteInput) {
+      rewriteInput.addEventListener('input', refreshNovelUI);
+    }
     
     document.getElementById('saveGameBtn').addEventListener('click', () => {
       playSound('click');
